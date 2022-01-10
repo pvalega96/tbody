@@ -35,5 +35,8 @@ Route::group([
 
     Route::apiResource('cart', 'Api\V1\CartController');
 
+    Route::apiResource('order', 'Api\V1\OrderController');
+    Route::middleware('checkadmin:auth:api')->post('order/date', 'Api\V1\OrderController@orderDate');
+
 
 });

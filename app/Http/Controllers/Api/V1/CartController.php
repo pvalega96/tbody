@@ -46,8 +46,6 @@ class CartController extends Controller
 
         return response()->json(['cart' => $cart, 'total' => $total], 201);
 
-
-
     }
 
     /**
@@ -63,7 +61,6 @@ class CartController extends Controller
             if($product->quantity >= $request->input('quantity')) {
 
                 $pricediscount = $product->price - ($product->price * ($request->input('discount') / 100));
-
                 $cart = Cart::firstOrCreate(
                     ['users_id' =>  $request->user()->id]
                 );
@@ -75,10 +72,8 @@ class CartController extends Controller
                     $cartp->discount = $request->input('discount');
                     $cartp->price = $pricediscount*$request->input('quantity');
                     if ($cartp->save()) {
-
                         Stock::where('product_id',$request->input('product_id'))
                             ->decrement("quantity", $request->input('quantity'));
-
                         return response()->json(['message' => 'Product add succesfully', 'product' => $cartp], 201);
                     } else {
                         return response()->json(['message' => 'Error to add Product'], 500);
@@ -92,8 +87,6 @@ class CartController extends Controller
             return response()->json(['err' => 'Product not found'],404); //devuelvo un resultado de exito
         }
     }
-
-
 
     /**
      * Update the specified resource in storage.
@@ -111,7 +104,6 @@ class CartController extends Controller
             if($request->input('operation')==1){
                //suma 1
                if($product->quantity >= 1) {
-
                    $pricediscount = $product->price - ($product->price * ($cartp->discount / 100));
                    $cartp1 = CartProduct::where('id', $id)
                        ->update([
@@ -124,13 +116,10 @@ class CartController extends Controller
                        return response()->json(['err' => 'ProductCart Add'],200); //devuelvo un resultado de exito
                    }else{
                        return response()->json(['err' => 'Error ProductCart'],404); //devuelvo un resultado de exito
-
                    }
-
                 }else{
                    return response()->json(['message' => 'Out of stock'], 500);
                }
-
            }elseif($request->input('operation')==0){
                 //si cantidad es cero eliminarlo
                //resta 1
@@ -149,9 +138,7 @@ class CartController extends Controller
                     return response()->json(['err' => 'ProductCart Deleted'],200); //devuelvo un resultado de exito
                 }else{
                     return response()->json(['err' => 'Error ProductCart'],404); //devuelvo un resultado de exito
-
                 }
-
            }
         }else{
             return response()->json(['err' => 'ProductCart not found'],404); //devuelvo un resultado de exito
@@ -170,9 +157,7 @@ class CartController extends Controller
     {
         $cartp = CartProduct::find($id);
         if($cartp==null){
-
             return response()->json(['err' => 'Product from cart not found'],404); //devuelvo un resultado de exito
-
         }
         if($cartp->delete()){
             Stock::where('product_id',$cartp->product_id)
