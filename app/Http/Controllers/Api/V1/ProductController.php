@@ -117,7 +117,20 @@ class ProductController extends Controller
         }
     }
 
-
-
+    public function uploadCsv(ProductUploadRequest $request){
+        try {
+            $f = fopen($request->excel, 'r');
+            while (($data = fgetcsv($f)) !== false) {
+                Product::create([
+                    'name' => $data[0],
+                    'price' => $data[1],
+                    'status' => 1
+                ]);
+            }
+            return response()->json(['message' => 'Product add succesfully'], 200);
+        }catch (Exception $e) {
+            return response()->json(['message' => 'Error to create Product'], 500);
+        }
+    }
 
 }

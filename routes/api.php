@@ -30,6 +30,7 @@ Route::group([
     //
     Route::apiResource('product', 'Api\V1\ProductController');
     Route::post('product/search/{name}', 'Api\V1\ProductController@search');
+    Route::middleware('checkadmin:auth:api')->post('product/upload', 'Api\V1\ProductController@uploadCsv');
 
     Route::apiResource('stock', 'Api\V1\StockController');
 
