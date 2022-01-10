@@ -17,7 +17,6 @@ class CartController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
-
     }
     /**
      * Display a listing of the resource.
@@ -56,24 +55,24 @@ class CartController extends Controller
      */
     public function store(CartRequest $request)
     {
-        $product = Stock::join('product','stock.product_id','product.id')->where('product.id',$request->input('product_id'))->first();
+        $product = Stock::join('product','stock.product_id','product.id')->where('product.id',$request->product_id)->first();
         if($product){
-            if($product->quantity >= $request->input('quantity')) {
+            if($product->quantity >= $request->quantity) {
 
-                $pricediscount = $product->price - ($product->price * ($request->input('discount') / 100));
+                $pricediscount = $product->price - ($product->price * ($request->discount / 100));
                 $cart = Cart::firstOrCreate(
                     ['users_id' =>  $request->user()->id]
                 );
                 if ($cart->save()) {
                     $cartp = new CartProduct();
                     $cartp->cart_id = $cart->id;
-                    $cartp->product_id = $request->input('product_id');
-                    $cartp->quantity = $request->input('quantity');
-                    $cartp->discount = $request->input('discount');
-                    $cartp->price = $pricediscount*$request->input('quantity');
+                    $cartp->product_id = $request->product_id;
+                    $cartp->quantity = $request->quantity;
+                    $cartp->discount = $request->discount;
+                    $cartp->price = $pricediscount*$request->quantity;
                     if ($cartp->save()) {
-                        Stock::where('product_id',$request->input('product_id'))
-                            ->decrement("quantity", $request->input('quantity'));
+                        Stock::where('product_id',$request->product_id)
+                            ->decrement("quantity", $request->quantity);
                         return response()->json(['message' => 'Product add succesfully', 'product' => $cartp], 201);
                     } else {
                         return response()->json(['message' => 'Error to add Product'], 500);
@@ -101,7 +100,7 @@ class CartController extends Controller
         $cartp = CartProduct::where('id',$id)->first();
         if($cartp){
             $product = Stock::join('product','stock.product_id','product.id')->where('product.id',$cartp->product_id)->first();
-            if($request->input('operation')==1){
+            if($request->operation==1){
                //suma 1
                if($product->quantity >= 1) {
                    $pricediscount = $product->price - ($product->price * ($cartp->discount / 100));
@@ -113,14 +112,14 @@ class CartController extends Controller
                    if($cartp1){
                        Stock::where('product_id',$cartp->product_id)
                            ->decrement("quantity", 1);
-                       return response()->json(['err' => 'ProductCart Add'],200); //devuelvo un resultado de exito
+                       return response()->json(['message' => 'ProductCart Add'],200); //devuelvo un resultado de exito
                    }else{
                        return response()->json(['err' => 'Error ProductCart'],404); //devuelvo un resultado de exito
                    }
                 }else{
                    return response()->json(['message' => 'Out of stock'], 500);
                }
-           }elseif($request->input('operation')==0){
+           }elseif($request->operation==0){
                 //si cantidad es cero eliminarlo
                //resta 1
                $pricediscount = $product->price - ($product->price * ($cartp->discount / 100));
@@ -135,7 +134,7 @@ class CartController extends Controller
                     if($cartp->quantity==1){
                         $this->destroy($cartp->id);
                     }
-                    return response()->json(['err' => 'ProductCart Deleted'],200); //devuelvo un resultado de exito
+                    return response()->json(['message' => 'ProductCart Add'],200); //devuelvo un resultado de exito
                 }else{
                     return response()->json(['err' => 'Error ProductCart'],404); //devuelvo un resultado de exito
                 }

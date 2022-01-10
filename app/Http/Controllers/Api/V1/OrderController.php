@@ -14,9 +14,18 @@ class OrderController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('checkadmin:auth:api', ['except' => ['store']]);
 
     }
+    public function index()
+    {
+        $order = Order::join('oder_product','order.id','oder_product.order_id')->get();
 
+        $total = Order::join('oder_product','order.id','oder_product.order_id')->sum('oder_product.price');
+
+        return response()->json(['orders' => $order, 'total' => $total], 201);
+
+    }
 
     public function store(Request $request)
     {
@@ -98,7 +107,14 @@ class OrderController extends Controller
         $from = date($request->since);
         $to = date($request->until);
 
-        return Order::whereBetween('created_at', [$from, $to])->get();
+        $order = Order::join('oder_product','order.id','oder_product.order_id')
+            ->whereBetween('order.created_at', [$from, $to])->get();
+
+        $total = Order::join('oder_product','order.id','oder_product.order_id')
+            ->whereBetween('order.created_at', [$from, $to])->sum('oder_product.price');
+
+        return response()->json(['orders' => $order, 'total' => $total], 201);
+
     }
 
 

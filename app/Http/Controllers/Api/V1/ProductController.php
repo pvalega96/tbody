@@ -16,6 +16,8 @@ class ProductController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('checkadmin:auth:api', ['except' => ['index', 'show','search']]);
+
     }
     /**
      * Display a listing of the resource.
@@ -36,8 +38,8 @@ class ProductController extends Controller
     public function store(ProductRequest $request)
     {
         $product = new Product();
-        $product->name = $request->input('name');
-        $product->price = $request->input('price');
+        $product->name = $request->name;
+        $product->price = $request->price;
         $product->status = 1;
 
         if ($product->save()) {
@@ -69,9 +71,9 @@ class ProductController extends Controller
         }
     }
 
-    public function search($name)
+    public function search(Request $request)
     {
-        $product = Product::where('name','like','%'.$name.'%')->get();
+        $product = Product::where('name','like','%'.$request->name.'%')->get();
         if(strlen($product)>2){
             return response()->json(['res' => $product],202); //devuelvo un resultado de exito
         }else{
@@ -106,14 +108,15 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = Product::where('id',$id);
-        if($product==null){
-            return response()->json(['err' => 'Product not found'],404); //devuelvo un resultado de exito
-        }
-        if($product->delete()){
-            return response()->json(['res' => 'Deleted Product'],202); //devuelvo un resultado de exito
-        }else{
-            return response()->json(['err' => 'Product not found'],404); //devuelvo un resultado de exito
+        $product = Product::where('id',$id)->first();
+        if($product) {
+            Stock::where('product_id', $id)
+                ->update([
+                    'quantity' => 0
+                ]);
+            return response()->json(['res' => 'Deleted Product'], 202); //devuelvo un resultado de exito
+        }else {
+            return response()->json(['err' => 'Product not found'], 404); //devuelvo un resultado de exito
         }
     }
 
@@ -121,13 +124,20 @@ class ProductController extends Controller
         try {
             $f = fopen($request->excel, 'r');
             while (($data = fgetcsv($f)) !== false) {
-                Product::create([
-                    'name' => $data[0],
-                    'price' => $data[1],
-                    'status' => 1
-                ]);
+
+                $product = new Product();
+                $product->name = $data[0];
+                $product->price = $data[1];
+                $product->status = 1;
+                if ($product->save()) {
+                    $stock = new Stock();
+                    $stock->product_id = $product->id;
+                    $stock->quantity = 0;
+                    $stock->save();
+                }
+
             }
-            return response()->json(['message' => 'Product add succesfully'], 200);
+            return response()->json(['message' => 'Product create succesfully'], 201);
         }catch (Exception $e) {
             return response()->json(['message' => 'Error to create Product'], 500);
         }

@@ -63,18 +63,13 @@ class StockController extends Controller
     public function update(EditStockRequest $request, $id)
     {
         $product=Stock::where('product_id',$id)->first();
-        $product->update($request->all());
-        return $product;
+        if($product){
+            $product->update($request->all());
+            return response()->json(['res' => $product],202); //devuelvo un resultado de exito
+        }else{
+            return response()->json(['err' => 'Product not found'],404); //devuelvo un resultado de exito
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
+
 }
